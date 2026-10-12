@@ -845,12 +845,25 @@ function renderSequenceNav() {
   const prevBtn = $('prev-card-btn');
   const nextBtn = $('next-card-btn');
 
-  prevBtn.disabled = index <= 0;
-  nextBtn.disabled = index < 0 || index >= filtered.length - 1;
+  if (prevBtn) prevBtn.disabled = index <= 0;
+  if (nextBtn) nextBtn.disabled = index < 0 || index >= filtered.length - 1;
 
-  $('sequence-text').textContent = index < 0
-    ? '暂无卡片'
-    : `顺序进度 ${String(index + 1).padStart(2, '0')} / ${String(filtered.length).padStart(2, '0')}`;
+  const seqText = $('sequence-text');
+  if (seqText) {
+    seqText.textContent = index < 0
+      ? '暂无卡片'
+      : `顺序进度 ${String(index + 1).padStart(2, '0')} / ${String(filtered.length).padStart(2, '0')}`;
+  }
+
+  // 同步移动端吸底操作栏状态
+  const mobPrev = $('mobile-prev-btn');
+  const mobNext = $('mobile-next-btn');
+  const mobCounter = $('mobile-counter-text');
+  if (mobPrev) mobPrev.disabled = index <= 0;
+  if (mobNext) mobNext.disabled = index < 0 || index >= filtered.length - 1;
+  if (mobCounter) {
+    mobCounter.textContent = index < 0 ? '0/0' : `${String(index + 1).padStart(2, '0')}/${String(filtered.length).padStart(2, '0')}`;
+  }
 }
 
 // 渲染顶部模块标题
@@ -1205,6 +1218,28 @@ function setupEventListeners() {
   $('prev-card-btn').addEventListener('click', goToPrevCard);
   $('next-card-btn').addEventListener('click', goToNextCard);
 
+  // 移动端底部吸底便捷栏
+  const mobPrev = $('mobile-prev-btn');
+  if (mobPrev) mobPrev.addEventListener('click', goToPrevCard);
+
+  const mobNext = $('mobile-next-btn');
+  if (mobNext) mobNext.addEventListener('click', goToNextCard);
+
+  const mobReveal = $('mobile-reveal-btn');
+  if (mobReveal) mobReveal.addEventListener('click', revealAnswer);
+
+  // 移动端卡片列表点击折叠/展开
+  const cardListPanel = document.querySelector('.card-list-panel');
+  const cardListHeader = document.querySelector('.card-list-panel .panel-header');
+  if (cardListHeader && cardListPanel) {
+    cardListHeader.addEventListener('click', () => {
+      cardListPanel.classList.toggle('expanded');
+    });
+  }
+
+  // 滑动手势支持（在题目卡片区域左右滑动切题）
+  setupSwipeGestures();
+
   // 随机抽题
   $('random-card-btn').addEventListener('click', () => {
     const filtered = getFilteredCards();
@@ -1254,6 +1289,15 @@ function markCard(status) {
   saveProgress();
 }
 
+function scrollToActiveCard() {
+  if (window.innerWidth <= 850) {
+    const target = $('question-title') || $('practice-workspace');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
+
 function goToPrevCard() {
   const filtered = getFilteredCards();
   const current = getCurrentCard();
@@ -1261,6 +1305,10 @@ function goToPrevCard() {
   if (index > 0) {
     activeCardId = filtered[index - 1].id;
     renderAll();
+    scrollToActiveCard();
+    showToast(`已切至第 ${index} / ${filtered.length} 题`);
+  } else {
+    showToast('已经是第一题了');
   }
 }
 
@@ -1271,7 +1319,48 @@ function goToNextCard() {
   if (index >= 0 && index < filtered.length - 1) {
     activeCardId = filtered[index + 1].id;
     renderAll();
+    scrollToActiveCard();
+    showToast(`已切至第 ${index + 2} / ${filtered.length} 题`);
+  } else {
+    showToast('已经是最后一题了！');
   }
+}
+
+// 触摸滑动手势支持（手指向左滑=下一题，向右滑=上一题）
+function setupSwipeGestures() {
+  const target = $('practice-workspace');
+  if (!target) return;
+
+  let startX = 0;
+  let startY = 0;
+
+  target.addEventListener('touchstart', (e) => {
+    // 忽略在输入框、快捷符号栏或卡片列表内部的触摸滑动
+    if (e.target.tagName === 'TEXTAREA' || e.target.closest('.mobile-symbols-bar') || e.target.closest('.card-items-wrap')) {
+      return;
+    }
+    startX = e.changedTouches[0].clientX;
+    startY = e.changedTouches[0].clientY;
+  }, { passive: true });
+
+  target.addEventListener('touchend', (e) => {
+    if (e.target.tagName === 'TEXTAREA' || e.target.closest('.mobile-symbols-bar') || e.target.closest('.card-items-wrap')) {
+      return;
+    }
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const diffX = endX - startX;
+    const diffY = endY - startY;
+
+    // 水平滑动距离大于 45px 且横向幅度明显大于纵向幅度
+    if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY) * 1.4) {
+      if (diffX < -45) {
+        goToNextCard(); // 左滑下一题
+      } else if (diffX > 45) {
+        goToPrevCard(); // 右滑上一题
+      }
+    }
+  }, { passive: true });
 }
 
 // 多重保障初始化启动流程（兼容移动端本地文件、WebViews 与极速缓存加载）
