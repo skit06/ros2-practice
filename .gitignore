@@ -1,0 +1,10 @@
+# Office / Windows 临时锁文件
+~$*.docx
+~$*.doc
+*.tmp
+Thumbs.db
+Desktop.ini
+
+# 日志与系统
+*.log
+.DS_Store

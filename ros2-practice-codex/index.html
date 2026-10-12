@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <title>ROS 2 记忆练习</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="ROS 2 记忆练习首页"><span class="brand-mark">R</span><span>ROS 2 <small>记忆练习</small></span></a>
+      <div class="top-actions"><span class="local-label"><i></i> 进度保存在本机</span><button class="reset-button" id="reset-progress" type="button">清空进度</button></div>
+    </header>
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="side-heading">学习模块</div>
+        <nav id="categories" aria-label="练习模块"></nav>
+        <div class="sidebar-note"><span class="note-icon">⌘</span><div><strong>练习小提示</strong><p>先自己默写，再揭晓答案。代码卡片支持 Tab 缩进。</p></div></div>
+      </aside>
+      <section class="main-content">
+        <div class="welcome-row"><div><div class="eyebrow">ROS 2 · 随学随练</div><h1>把知识点，练成肌肉记忆。</h1><p>根据你的课堂笔记整理。写一遍、对照答案，再标记掌握情况。</p></div><div class="progress-card"><div class="progress-top"><span>练习进度</span><strong id="progress-count">0 / 0</strong></div><div class="progress-track"><span id="progress-bar"></span></div><div class="progress-legend"><span><i class="passed-dot"></i>已掌握 <b id="passed-count">0</b></span><span><i class="review-dot"></i>需复习 <b id="review-count">0</b></span></div></div></div>
+        <div class="toolbar"><div class="module-title"><span id="module-icon">✦</span><div><h2 id="module-name">全部练习</h2><small id="module-subtitle">按学习顺序，从基础开始</small></div></div><div class="toolbar-actions"><label class="search-box"><span>⌕</span><input id="search" type="search" placeholder="搜索练习内容" aria-label="搜索练习内容" /></label></div></div>
+        <div class="workspace">
+          <section class="card-list-panel"><div class="list-heading"><span>练习卡片</span><span id="card-count"></span></div><div id="card-list" class="card-list"></div></section>
+          <article class="practice-panel"><div class="practice-meta"><div><span id="card-category" class="category-pill">Python 节点基础</span><span id="card-source" class="source-label"></span></div><span id="card-position" class="position-label">01 / 00</span></div><div class="question-block"><div class="question-kicker">请试着写出来</div><h2 id="question"></h2><p id="hint" class="hint"></p></div><div class="editor-head"><label for="answer-input">你的答案</label><span>支持 Tab 缩进</span></div><div class="editor-wrap"><div class="line-numbers" id="line-numbers" aria-hidden="true">1</div><textarea id="answer-input" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="在这里输入命令或代码…" aria-label="输入你的答案"></textarea></div><div class="answer-actions"><button id="reveal" class="primary-button" type="button"><span>◉</span> 揭晓原文答案</button><button id="check" class="secondary-button" type="button">与答案对照</button><span id="match-result" aria-live="polite"></span></div><section id="answer-panel" class="answer-panel" hidden><div class="answer-title"><div><span class="answer-check">✓</span><strong>笔记中的原文</strong></div><button id="copy-answer" type="button">复制答案</button></div><pre><code id="original-answer"></code></pre><div class="answer-foot" id="answer-note"></div></section><div class="mark-actions"><span>这题练得怎么样？</span><div><button id="mark-passed" class="mark-button passed" type="button"><span>✓</span> 已掌握</button><button id="mark-review" class="mark-button review" type="button"><span>↻</span> 需要复习</button></div></div><div class="sequence-actions"><button id="previous-card" type="button">← 上一题</button><span id="sequence-hint">学习顺序</span><button id="next-card" type="button">下一题 →</button></div></article>
+        </div>
+        <footer>内容来源于工作区中的 ROS 2 Word 笔记 <span>·</span> 进度只保存在当前浏览器</footer>
+      </section>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

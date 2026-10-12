@@ -1,0 +1,532 @@
+﻿==================================================
+FILE: C++ROS2节点骨架笔记.docx
+==================================================
+C++ ROS2 节点标准骨架与核心语法
+—— 课堂笔记整理（剥离演示弯路后的核心内容）
+一、必背：C++ ROS2 节点的标准“四步骨架”
+在 C++ 中写一个独立节点，代码结构是焊死的，闭着眼睛要能按顺序顺下来：
+#include "rclcpp/rclcpp.hpp" // 1. 拿工具箱
+int main(int argc, char **argv)
+{
+    // ---- 第 1 步：开机通电 ----
+    rclcpp::init(argc, argv);
+    // ---- 第 2 步：造节点实体（唯一需要你起名字的地方）----
+    auto node = std::make_shared<rclcpp::Node>("cpp_node");
+    // ---- 日志打印（替代 cout 和 print）----
+    RCLCPP_INFO(node->get_logger(), "节点启动成功！");
+    // ---- 第 3 步：原地待命（卡死循环等数据/外部打断）----
+    rclcpp::spin(node);
+    // ---- 第 4 步：关机收尾 ----
+    rclcpp::shutdown();
+    return 0;
+}
+绝对固定、一个字母都不用改的：rclcpp::init、rclcpp::spin、rclcpp::shutdown。
+唯一由你填空的：双引号里的节点名字（如 "cpp_node"）以及日志里要说的话。
+二、必须认得：3 个 C++ 核心符号
+遇到这些符号时，不再觉得它们是乱码：
+::  （双冒号）：“……家里的”（作用域）
+rclcpp::init → 找 rclcpp 家里的 init 工具。
+std::cout → 找 C++ 标准库（std）家里的控制台输出。
+->  （箭头）：通过指针调功能
+因为 node 是由 std::make_shared 创造出的智能指针（里面存的是内存地址），不能直接用 .，必须用 node->get_logger()。
+;  （分号）：每句话的句号
+C++ 不看缩进，每一行有效代码末尾必须带分号，漏了必报语法错。
+三、仅需知道概念：CMake 的定位（不需要背代码）
+这节课的 CMakeLists.txt 细节不需要死记，你只要在脑子里建立一个常识直觉：
+不要指望用 g++ 直接编译 ROS2：ROS2 依赖成百上千个底层头文件和 .so 库文件，手敲 g++ 命令会把几十行绝对路径敲到崩溃。
+CMake 是包工头，不是泥瓦匠：CMake（CMakeLists.txt）只负责生成施工方案，帮你自动找齐头文件和动态库的位置，然后它自己在后台去指挥 g++ 干体力活。
+这节课的 CMake 指令马上会被淘汰：课里的 target_include_directories 只是过渡演示。下一节课讲到 ROS2 官方包管理时，官方一句 ament_target_dependencies 会把所有配置全自动包揽。
+小结：掌握了上面这些，这节课的核心目标就全部达成了，后面的编译流程留给 ROS2 工具链帮你处理即可。
+
+==================================================
+FILE: C++功能包五步流程笔记.docx
+==================================================
+用功能包组织和运行 C++ 节点
+—— 标准五步流程课堂笔记整理
+第一步：创建 C++ 功能包骨架
+在工作空间根目录（如 ~/chapt2）下，终端执行：
+ros2 pkg create demo_cpp_pkg --build-type ament_cmake --license Apache-2.0
+【必须记住】
+命令格式：ros2 pkg create <包名> --build-type ament_cmake。
+--build-type ament_cmake 必须焊死在脑子里：告诉系统这是一个基于 CMake 的 C++ 工程，如果不写或手滑写成 Python，后面的构建机制完全不同。
+【只需看懂】
+生成的目录结构。知道 src/ 是以后放代码的地方，CMakeLists.txt 是自动生成的图纸，include/ 是放多文件头文件的（初学期先空着不用管）。
+第二步：编写 C++ 源码（放入 src 目录）
+在 demo_cpp_pkg/src/ 目录下新建源码文件（如 cpp_node.cpp）：
+#include "rclcpp/rclcpp.hpp"
+int main(int argc, char **argv)
+{
+    // 1. 通电开机
+    rclcpp::init(argc, argv);
+    // 2. 造节点实体（填空起名）
+    auto node = std::make_shared<rclcpp::Node>("cpp_node");
+    // 日志打印
+    RCLCPP_INFO(node->get_logger(), "你好 C++ 节点！");
+    // 3. 原地待命
+    rclcpp::spin(node);
+    // 4. 拔电关机
+    rclcpp::shutdown();
+    return 0;
+}
+【必须记住】
+源码存放路径：C++ 代码必须放在 src/ 目录下，绝对不能直接扔在包根目录下。
+C++ 节点的四步核心骨架：init → make_shared<rclcpp::Node> → spin → shutdown。
+【只需看懂】
+auto 智能指针推导与 RCLCPP_INFO 宏语法。看到它们知道是造节点和打日志即可。
+第三步：配置 CMakeLists.txt（填空式改动）
+打开包内自动生成的 demo_cpp_pkg/CMakeLists.txt，在相应注释下方填入这 4 个固定动作（不需要手写文件，只做填空）：
+# 1. 找 ROS2 C++ 官方工具箱
+find_package(rclcpp REQUIRED)
+# 2. 声明编译目标：把 src/cpp_node.cpp 编译成可执行文件 cpp_node
+add_executable(cpp_node src/cpp_node.cpp)
+# 3. 绑定依赖：自动搞定头文件路径和底层 .so 动态库链接
+ament_target_dependencies(cpp_node rclcpp)
+# 4. 交付安装：把编译出来的程序拷贝到 install 目录供系统识别
+install(TARGETS
+  cpp_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+【必须记住】
+不需要背下整个 CMakeLists.txt，它是自动生成的，每次建包照着模板改这 4 句。
+只要添加新节点，就复制 2、3、4 步，把里面的程序名和源文件名改成新的。
+【只需看懂】
+ament_target_dependencies 是 ROS2 封装的神级指令，它在后台一次性替你完成了找头文件和链接动态库的繁重工作。
+install(TARGETS ... DESTINATION lib/${PROJECT_NAME})：必须有这句，程序才会进 install/ 目录，否则 ros2 run 会报找不到。
+关于 package.xml：在本地开发实验时，漏写 <depend>rclcpp</depend> 编译器也照样能编过；但规范工程里最好顺手补上这一行声明。
+第四步：根目录编译构建
+必须退回到工作空间根目录（~/chapt2），执行统一构建：
+colcon build
+【必须记住】
+敲命令的路径：必须在工作空间根目录敲（ls 能同时看到各个包文件夹的地方），严禁进到包内部去敲。
+坚决不要手动 mkdir build 或执行 cmake ..，这是脱离 ROS2 的传统老路，全交由 colcon build 统一调度。
+【只需看懂】
+终端输出的 Starting >>> demo_cpp_pkg 到 Finished <<< demo_cpp_pkg，知道这是构建系统在后台调动 CMake 和编译器工作。
+第五步：激活环境并运行节点
+在当前终端依次执行：
+# 1. 刷新环境变量
+source install/setup.bash
+# 2. 启动节点
+ros2 run demo_cpp_pkg cpp_node
+【必须记住】
+排错第一反射：如果 ros2 run 报错 Package 'demo_cpp_pkg' not found，第一反应是忘了敲 source install/setup.bash。
+运行语法：ros2 run <功能包名> <在 CMakeLists 里 add_executable 的程序名>。
+【只需看懂】
+source 脚本执行后，ROS2 会在 $AMENT_PREFIX_PATH 里加入当前包的路径，从而让 ros2 run 顺着路径找到可执行程序。
+Python 包 vs C++ 包的核心对照
+动作
+Python 功能包（2.2.1）
+C++ 功能包（2.3.1）
+建包参数
+--build-type ament_python
+--build-type ament_cmake
+源码目录
+demo_python_pkg/demo_python_pkg/xxx.py
+demo_cpp_pkg/src/xxx.cpp
+注册程序
+改 setup.py（配置 entry_points）
+改 CMakeLists.txt（配置 add_executable + install）
+构建命令
+colcon build（根目录下）
+colcon build（根目录下，完全相同）
+运行命令
+source 后 ros2 run 包名 节点名
+source 后 ros2 run 包名 节点名（完全相同）
+
+==================================================
+FILE: Python功能包五步流程笔记.docx
+==================================================
+用功能包组织和运行 Python 节点
+—— 标准五步流程课堂笔记整理
+第一步：创建功能包骨架（生成项目结构）
+在终端进入你的工作空间目录（如 ~/chapt2），执行生成命令：
+ros2 pkg create demo_python_pkg --build-type ament_python --license Apache-2.0
+【必须记住】
+命令格式：ros2 pkg create <包名> --build-type ament_python。
+参数 --build-type ament_python 必须焊在脑子里，漏了这个参数系统会默认生成 C++ 包。
+【只需看懂】
+命令跑完后自动生成的一堆文件目录（resource/、test/、package.xml、setup.py 等）。你不需要手写这些目录，知道这是 ROS2 自动帮你搭好的“毛坯房”就行。
+第二步：编写节点代码（放对位置）
+在内层同名文件夹下创建 Python 脚本。
+路径：demo_python_pkg/demo_python_pkg/python_node.py
+代码内容依然是四步标准骨架：
+import rclpy
+from rclpy.node import Node
+def main():
+    rclpy.init()  # 1. 通电初始化
+    node = Node("python_node")  # 2. 实例化节点并起名
+    node.get_logger().info("你好 Python 节点！")
+    rclpy.spin(node)  # 3. 挂起循环
+    rclpy.shutdown()  # 4. 退出关机
+if __name__ == "__main__":
+    main()
+【必须记住】
+文件位置规律：代码必须放在内层的同名文件夹内（包名/包名/xxx.py），绝对不能扔在根目录下。
+核心四步走：init() → Node() → spin() → shutdown()。
+【只需看懂】
+if __name__ == '__main__': 这一段入口保护。只要记住固定在最底下调用 main() 即可。
+第三步：配置注册与依赖（填空式修改）
+这一步只需要改动自动生成的两个文件，千万不要从零重写：
+1. 打开 setup.py（注册终端命令）
+找到 entry_points 这一块，在 'console_scripts': [] 的列表里添加一行：
+entry_points={
+    'console_scripts': [
+        'python_node = demo_python_pkg.python_node:main',
+    ],
+},
+2. 打开 package.xml（报备依赖）
+在 <license> 标签下方加一行：
+<depend>rclpy</depend>
+【必须记住】
+不需要记住这两个文件的完整长相，它们永远是自动生成的。
+必须记住映射语法公式：'终端命令名字 = 包名.文件名:函数名'。
+左边是未来终端敲的名字；
+右边冒号后永远跟 :main。
+【只需看懂】
+setup.py 里其他几十行诸如 author、maintainer、tests_require 等模板代码，全部不用管，保留默认即可。
+<depend>rclpy</depend> 知道它代表“项目需要用 rclpy 库”即可。
+第四步：编译构建（打包程序）
+回到你的工作空间根目录（即 demo_python_pkg 的上一层，如 ~/chapt2），执行构建：
+colcon build
+# 或者推荐日常开发使用的软链接参数：
+colcon build --symlink-install
+【必须记住】
+命令：colcon build。
+执行位置非常关键：必须在包含功能包的工作空间根目录下敲，不要进到包里面去敲。
+【只需看懂】
+敲完后终端生成的三个新文件夹：build/（编译中间过程）、install/（真正可运行的程序归宿）、log/（日志）。
+里面生成的 setup.bash 文件是机器看的一堆脚本，你不需要点开看，更不需要背里面的代码。
+第五步：激活环境并运行（打通寻路机制）
+构建完成后，按顺序执行两条命令：
+# 1. 刷新当前终端的环境变量
+source install/setup.bash
+# 2. 启动节点
+ros2 run demo_python_pkg python_node
+【必须记住】
+黄金排错反射：只要敲 ros2 run 报 Package '...' not found，第一反应一定是忘了 source install/setup.bash。
+source 只对当前这一个终端黑框有效。开新黑框必须重新 source，或者把它写入 ~/.bashrc。
+运行命令固定结构：ros2 run <功能包名> <你在setup.py里注册的名字>。
+【只需看懂】
+source 底层是在给全局环境变量 AMENT_PREFIX_PATH 后面追加当前 install/ 目录的绝对路径，让 ROS2 的寻路程序能顺着名单找到程序。
+
+==================================================
+FILE: ROS2工程笔记_过滤版.docx
+==================================================
+ROS 2 工程笔记
+—— 过滤杂音：必须刻进肌肉记忆 vs 理解物理逻辑即可
+这是一份帮你过滤掉杂音的工程笔记，分为“必须刻进肌肉记忆”和“理解物理逻辑即可”两部分。
+一、必须记住的内容（硬规则与工具链）
+这部分是你在 ROS 2 开发里无论面对什么机器人都要随时调用的基本功：
+1. 终端反查三板斧（绝不死记接口名）
+ros2 node info <节点名>：掀开节点底牌，查它听什么（Subscribers）、发什么（Publishers）。
+ros2 topic info <话题名>：查通信信件的准确类型（如 geometry_msgs/msg/Twist）。
+ros2 interface show <类型名>：查信封里到底有哪些字段（如 linear.x、angular.z）。
+2. 订阅者的 4 参数规则与机制
+语法格式：self.create_subscription(类型, '话题名', self.回调函数, 队列深度)。
+硬性规则：订阅者必须绑定回调函数，因为这是事件驱动机制（数据到达即触发中断），不能写成死等读取，否则会阻塞整个系统。
+3. self 的使用红线
+必须加 self：跨函数复用的东西（发布者句柄、订阅者句柄、设定的目标参数 self.target_x）。
+绝不加 self：单次计算即抛弃的临时变量（几何差值 dx、计算出的速度、msg = Twist()、输入参数 pose）。
+4. 航向角计算必须用 atan2
+平面移动机器人求朝向角，永远用 math.atan2(dy, dx)，绝不用 atan(dy/dx)。前者自动处理四个象限的正负号，且天然避免分母为 0 崩溃。
+二、只需看懂的内容（重在直觉，无需默写）
+这部分在真机工程中通常由框架（如 Nav2 导航栈）封装好，明白它的工作原理即可，不用在白纸上背诵：
+1. P（比例）控制的物理直觉
+控制器本质：拿“误差”当“油门”。
+距离误差大 → 速度大：离得远开得快，接近目标自动刹车。
+角度偏差大 → 角速度大：偏得厉害猛打方向盘，正对目标方向盘回正。
+2. PID 的分工与海龟的特殊性
+P（比例）：负责当前发力。
+I（积分）：负责消除地面摩擦或死区导致的“就差一点点到不了终点”的静差。
+D（微分）：负责对冲惯性，防止车身冲过头震荡。
+小海龟为什么只要 P：海龟是理想一阶运动学模型，没有质量、惯性与摩擦阻力，给零速度立刻静止，因此不需要 I 和 D。
+3. 几何计算公式代码
+勾股定理算距离、差值算误差这几行代码，理解输入（当前点与目标点）和输出（距离与角误差）的对应关系即可，不需要一字不差地默写。
+4. ROS 2 节点外壳
+rclpy.init()、spin()、shutdown() 以及 setup.py 的入口配置，都属于通用样板代码，随用随复制或使用编辑器代码片段即可。
+
+==================================================
+FILE: ROS2笔记.docx
+==================================================
+ROS2 环境变量与 Python 节点基础
+—— 2.1.1 节课堂笔记整理
+一、本节课核心问答与理解梳理
+Q1：环境变量到底是什么？为什么敲 ros2 run 会去读取 AMENT_PREFIX_PATH？
+理解：环境变量是系统内存里的“全局代号通讯录”。ros2 run 是一段官方写好的 Python 程序，其源码里明确写了去读取 $AMENT_PREFIX_PATH，把它跟你的包名、程序名拼成一条完整的绝对路径，再去硬盘上找到并启动程序。这样设计是为了让 ROS2 既能找到官方自带的程序，也能动态找到未来你自己写的代码。
+Q2：代码里写了那么多行，到底先运行哪个？spin 到底执行多久？shutdown 什么时候执行？
+理解：代码严格按从上到下的顺序单步执行。spin() 是一个等待/响应事件的死循环（保持节点存活不退场），只要没有外部打断，它就会无限期运行下去。只有当你在终端按下 Ctrl + C 发送中断信号打破 spin() 循环后，程序才会往下走去执行 shutdown() 清理退场。
+Q3：为什么我按 Ctrl + C 没有输出后面写的 print，反而弹出一大堆红字报错？
+理解：在 Python 中，按 Ctrl + C 会直接抛出 KeyboardInterrupt（键盘强行中断异常）。在没有做异常捕获（try-finally）的情况下，Python 遇到异常会直接强制中断退出，导致跳过了后面的代码。教程里小鱼为了让演示代码最简化，省略了异常捕获，按 Ctrl + C 时底层同样抛出了这个中断。
+Q4：Python 里的点号 . 是什么意思？为什么不用 print 而要用长长一串 node.get_logger().info()？
+理解：点号 . 等同于中文里的“的”（对象从属关系）。node.get_logger().info() 即：找到节点 node → 获取它“的”日志记录器 → 执行日志器“的” info 打印功能。不用 print 是因为 ROS2 的日志工具会自动附带日志级别（INFO/WARN）、纳秒级时间戳和节点身份证名称，方便多节点协作时排查故障。
+Q5：export RCUTILS_CONSOLE_OUTPUT_FORMAT=... 这一长串是在做什么？
+理解：它通过设置环境变量来修改 ROS2 底层输出日志的排版模板。不需要改动任何 Python 代码，就能把终端原本冗长的时间戳显示替换为自定义的 [函数名:代码行号]:具体内容 格式。
+Q6：VS Code 里的 Node 为什么首字母要大写？
+理解：Python 命名规范中，首字母大写代表“模板/类（Class）”，如 Node 是制造节点的图纸；全小写代表“你自己根据模板造出来的实体对象（Object）”，如 node = Node("...")。
+二、核心陌生英文单词与命令词汇表
+单词 / 符号
+全拼或来源
+中文含义与实际作用
+Path
+Path
+路径 / 家庭住址。文件在系统文件夹层级里的完整定位。
+PATH
+Linux 环境变量
+系统寻路清单。系统在终端直接执行命令时，默认翻找的一组文件夹目录集合。
+echo
+Echo（回声）
+打印命令。把输入的内容或变量值显示在终端屏幕上。
+export
+Export（导出）
+写入环境变量。将一个变量记录到当前终端的全局会话中。
+$
+语法符号
+取值符。告诉终端提取后面变量名里存储的真实字符串。
+rclpy
+ROS Client Library for Python
+ROS2 的 Python 工具箱。Python 调用 ROS2 所有底层功能的核心库。
+Node
+Node
+节点。机器人系统中一个独立的计算/执行进程单元。
+init
+Initialize
+初始化。为 ROS2 程序分配资源、搭建底层网络通道。
+spin
+Spin（打转/旋转）
+原地待命循环。阻塞当前主线程，保持程序不退出演示，等待处理消息。
+shutdown
+Shut down
+关闭 / 关机。注销节点，释放占用的内存和系统端口。
+logger
+Logger
+日志记录员。专门负责抓取运行上下文并向终端输出格式化日志的工具。
+info / warn
+Information / Warning
+信息级别 / 警告级别。输出日志的重要程度分级。
+RCUTILS
+ROS 2 C Utilities
+ROS2 基础 C 工具库。ROS2 极底层的跨平台工具组件，负责底层日志格式化等。
+CONSOLE
+Console
+控制台 / 终端。即打字的黑框命令行界面。
+KeyboardInterrupt
+Keyboard + Interrupt
+键盘中断异常。在终端按下 Ctrl + C 时操作系统触发并传递给 Python 的特定退出信号。
+三、小鱼视频原版代码与逐行详解
+小鱼在 2.1.1 视频中最终呈现的完整代码如下：
+import rclpy
+from rclpy.node import Node
+def main():
+    rclpy.init()  # 1. 初始化，分配资源
+    node = Node("python_node")  # 2. 创建一个名为 python_node 的节点
+    node.get_logger().info("你好 Python 节点！")  # 3. 打印一条普通信息日志
+    node.get_logger().warn("你好 Python 节点！")  # 4. 打印一条警告信息日志
+    rclpy.spin(node)  # 5. 挂起循环，等待外部中断
+    rclpy.shutdown()  # 6. 退出后清理资源
+if __name__ == "__main__":
+    main()
+逐行功能拆解与语法规则
+第 1 行  import rclpy  引入 ROS2 的 Python 客户端核心库，后续所有的初始化、循环管理都要调用它。
+第 2 行  from rclpy.node import Node  从 rclpy 里的 node 子模块中，单独把 Node 这个“节点模具/类”提取出来备用。
+第 4 行  def main():  定义整个程序的业务主函数，代码逻辑集中写在里面。
+第 5 行  rclpy.init()  【固定第 1 步】通电启动。向操作系统申请网络与通信资源，构建 ROS2 的后台上下文通信层。
+第 6 行  node = Node("python_node")  【唯一自定义命名行】拿模具压出一个真实的节点实例，并把它注册进 ROS2 通信网络中，网络唯一标识名叫 "python_node"。赋值给变量 node。
+第 7 行  node.get_logger().info('你好 Python 节点！')  呼叫节点绑定的日志系统，以 INFO（常规信息）级别向屏幕输出文字。
+第 8 行  node.get_logger().warn('你好 Python 节点！')  同样输出文字，但日志级别设为 WARN（警告信息），终端上通常会以黄色字体显现以作区分。
+第 9 行  rclpy.spin(node)  【固定第 2 步】节点驻留。代码执行到这里进入死循环状态，节点在后台持续监听外界传感器或其它节点传来的数据。
+第 10 行  rclpy.shutdown()  【固定第 3 步】关机退出。当外部强行打断退出 spin 循环后，负责关闭网络并销毁该节点占用的内存。
+第 12~13 行  if __name__ == "__main__": main()  Python 的标准化入口保护。确保这个脚本在终端被 python3 直接执行时，自动调用上方的 main() 函数。
+
+==================================================
+FILE: ROS2自定义接口msg笔记.docx
+==================================================
+ROS 2 自定义接口（.msg）笔记
+—— 必须背下来 vs 只要看懂
+一、必须背下来的内容（硬规则与肌肉记忆）
+这部分是 ROS 2 开发的底层规范，一旦记错会导致编译直接失败或整个通信链路瘫痪：
+1. 接口功能包的构建类型铁律
+通信接口包必须是 ament_cmake，绝不能建为 ament_python。
+原因：跨语言代码生成器（rosidl）依赖 CMake 工具链将接口编译成 C++ 和 Python 运行时代码。
+2. 接口文件（.msg）的三大语法红线
+存放路径：必须在功能包根目录下的 msg/ 文件夹中。
+文件命名：必须是大驼峰命名法（如 SystemStatus.msg），首字母大写。
+字段格式：类型 字段名，类型用标准 IDL（float32，float64，int32，string，bool），字段名必须用小写加下划线（如 cpu_percent）。
+3. CMakeLists.txt 的核心生成宏
+必须调用 rosidl_generate_interfaces 宏告诉编译器要转译哪个文件：
+find_package(rosidl_default_generators REQUIRED)
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/SystemStatus.msg"
+  DEPENDENCIES builtin_interfaces # 引用了外部内置类型时必填
+)
+拼写必须精准：生成器是 rosidl_default_generators，宏是 rosidl_generate_interfaces。
+4. Python 节点导入与调用语法
+导入：from <包名>.msg import <接口类名>（如 from status_interfaces.msg import SystemStatus）。
+ROS 时间戳获取：msg.stamp = self.get_clock().now().to_msg()。
+5. 日志与发布的本质分工
+self.get_logger().info()：只在当前终端打字，是给开发者肉眼调试看的。
+self.status_publisher_.publish(msg)：真正把二进制数据打包推向 DDS 网络，其他订阅者才能接收到。
+6. 生态第一原则
+官方已有标准接口时，绝对不要自己写。控制底盘必须用 geometry_msgs/msg/Twist，激光雷达必须用 sensor_msgs/msg/LaserScan。滥用自定义接口会导致 Nav2 导航、Rviz2 等整个开源生态无法识别你的机器人。
+二、只要看懂的内容（原理机制与随查工具）
+这部分属于底层设计理念或第三方工具，理解其背后的逻辑即可，不需要默写代码：
+1. 为什么要用 .msg 而不用 JSON 或 Python 字典？
+编译期强类型契约：接口锁死字段类型和名称，防止敲错键名导致程序在运行时静默失效。
+零序列化开销（微秒级通信）：ROS 2 底层 DDS 协议走二进制内存对齐直传，完全省去了字符串编码与反序列化的 CPU 性能浪费。
+抹平跨语言鸿沟：C++ 与 Python 看到的是完全一致的结构体定义。
+2. psutil 与 platform 系统库
+这两个是纯 Python 工具库，不是 ROS 2 专属知识。
+知道 psutil 是查硬件（CPU/内存/网卡流量）、platform.node() 是查主机名即可。具体 API（如 psutil.virtual_memory()）开发时随用随查文档。
+3. 单位换算与数据清洗
+操作系统底层采集的内存和网卡流量默认为 Byte（字节）。
+代码里连续两次 / 1024 是纯数学单位换算（Byte → KB → MB），理解这一步是为了让上位机显示更清晰。
+4. str(msg) 格式化打印
+ROS 2 生成的自定义消息类底层自动实现了 __str__ 方法，直接用 str(msg) 就能把所有字段排版打印出来，无需自己手动拼接长字符串。
+5. package.xml 的样板依赖配置
+接口包中的 <member_of_group>rosidl_interface_packages</member_of_group> 和运行时依赖属于固定样板文件，实际项目中直接从现有包复制模板改名即可。
+
+==================================================
+FILE: ROS2话题通信速记笔记.docx
+==================================================
+ROS 2 核心速记笔记
+—— 3.1 ~ 3.2 话题通信（发布者 / 订阅者）
+第一部分：必须会默写的（核心代码与命令）
+1. 发布者（发广播）的核心 3 步
+在节点类的 __init__ 里写：
+# 1. 领喇叭（类型、话题名、队列深度）
+self.pub = self.create_publisher(String, 'topic_name', 10)
+# 2. 定闹钟（间隔秒数、回调函数名——绝不加括号）
+self.timer = self.create_timer(1.0, self.timer_callback)
+在回调函数里写：
+# 3. 装信封并推出去
+def timer_callback(self):
+  msg = String()
+  msg.data = '要发的内容'
+  self.pub.publish(msg)
+2. 订阅者（收广播）的核心 2 步
+在节点类的 __init__ 里写：
+# 1. 领收音机（类型、话题名、回调函数名——绝不加括号、队列深度）
+self.sub = self.create_subscription(
+    String, 'topic_name', self.sub_callback, 10
+)
+在回调函数里写：
+# 2. 自动触发拆信封（必须有 msg 形参接数据）
+def sub_callback(self, msg):
+  data = msg.data  # 直接从 .data 拿内容
+  self.get_logger().info(f'收到: {data}')
+3. 必须默写的 4 个排查命令
+列出所有频道：ros2 topic list
+监听某个频道：ros2 topic echo /话题名
+查频道状态与类型：ros2 topic info /话题名
+看通信拓扑关系图：rqt_graph
+4. 终端编译运行的固定流程（每次改完必走）
+cd ~/工作空间名               # 进根目录
+colcon build                 # 编译
+source install/setup.bash    # 刷新环境变量
+ros2 run 功能包名 节点别名      # 启动节点
+第二部分：必须看懂的（模版与机制，不用从零背）
+1. 节点的固定外壳模版
+每次写代码直接复制这段外壳，只要看懂哪里改名字即可：
+import rclpy
+from example_interfaces.msg import String  # 引入消息类型
+from rclpy.node import Node
+class MyNode(Node):
+  def __init__(self):
+    super().__init__('node_name')  # 看懂：给节点起名字
+    # 在这里塞上面的发布/订阅核心代码...
+def main():
+  rclpy.init()  # 看懂：系统初始化通电
+  node = MyNode()  # 看懂：根据图纸造出实体
+  rclpy.spin(node)  # 看懂：让节点原地死守，等待定时器或话题中断打断
+  rclpy.shutdown()  # 看懂：断电关机
+2. 关键语法机制认知
+为什么传函数名不带括号？
+带括号 self.callback() 是现在立刻执行。
+不带括号 self.callback 是把函数名片递给系统，告诉系统“闹钟响了/有消息来了你再去执行”。
+参数里的 10 是什么？
+缓冲队列长度（QoS Depth）。网络堵塞或来不及处理时，底层最多存 10 条，超出挤掉最旧的数据。
+setup.py 里改哪里？
+找到 entry_points，看懂映射关系即可：
+'console_scripts': [
+    '终端运行的别名 = 功能包名.文件名:main',
+],
+
+==================================================
+FILE: 海龟画圆开环控制笔记.docx
+==================================================
+海龟画圆（开环控制）笔记
+—— 肌肉记忆 vs 理解原理
+这份是上一节“海龟画圆（开环控制）”的笔记，同样按“肌肉记忆”和“理解原理即可”拆开：
+一、必须记住的内容（硬规则与工具链）
+1. 发布者（Publisher）创建语法
+格式：self.cmd_vel_pub = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
+参数三要素：消息类型（Twist）、话题名称（'/turtle1/cmd_vel'）、队列深度（10）。
+2. 定时器（Timer）机制与语法
+格式：self.timer = self.create_timer(0.1, self.timer_callback)
+核心规则：传入的回调函数名绝对不能带括号（传的是函数指针/引用，不是执行结果）。
+为什么需要它：底盘控制器自带看门狗（Watchdog）安全机制。如果只发一次速度，海龟走一小截就会因为没有新指令而自动刹停；必须用定时器以固定频率（如 10Hz）持续“喂指令”。
+3. Twist 消息的数据结构
+必须记住最常用的两个通道：
+msg.linear.x：前后线速度（前进为正，后退为负，单位 m/s）。
+msg.angular.z：绕 Z 轴偏航角速度（逆时针左转为正，顺时针右转为负，单位 rad/s）。
+地面移动机器人（小海龟、差速底盘）在平面上只能前行和旋转，linear.y、linear.z 以及 angular.x、angular.y 默认全为 0。
+4. 回调函数发信三步套路
+def timer_callback(self):
+  msg = Twist()  # 1. 实例空信封
+  msg.linear.x = 1.0  # 2. 装填速度数据
+  msg.angular.z = 1.0
+  self.cmd_vel_pub.publish(msg)  # 3. 发布
+
+==================================================
+FILE: 面向对象与ROS2节点模板笔记.docx
+==================================================
+面向对象基础与 ROS2 节点标准模板
+—— 课堂笔记整理
+刚接触面向对象被这堆带下划线的语法糖轰炸一下午很正常，好在这一步跨过去后，整个 ROS2 的核心骨架你就彻底拿下了。
+【必须焊死在脑子里的】（机械反射，错一个字直接报错）
+继承认爹语法：
+class MyNode(Node):
+括号里必须写父类名字。不写就是普通 Python 脚本，写了才具备 ROS2 节点的全部能力。
+出厂初始化第一行必喊 super()：
+super().__init__("节点名")
+永远写在子类 def __init__(self, ...): 的第一行。漏了这一行，父类的通信底座就没激活，后面只要调用 ROS2 相关功能就会当场崩溃。
+数据与组件必须挂在 self. 上：
+self.xxx = ...
+只要这个变量以后在别的方法里还要用（比如计数器、发布者、定时器），就必须加 self.。不加 self. 的变量在 __init__ 跑完后就直接被系统回收了。
+调用函数/方法必须加括号：
+rclpy.init()、rclpy.shutdown()、node.write()
+漏掉括号只会拿到函数本身的对象指针，根本不会触发执行。
+主函数标准四步闭环：
+rclpy.init() → 实例化节点 node = MyNode("...") → rclpy.spin(node) 原地待命 → rclpy.shutdown() 拔电退出。
+【只需看懂的】（混个眼熟，完全不用背）
+类型注解与箭头（: str, : int, -> None）：
+纯粹是给程序员看的说明标签，删干净了代码照样 100% 正常运行，写自己的项目时觉得烦完全可以不写。
+self 的传参原理：
+定义时写 def eat(self, food_name)，调用时只写 node.eat('鱼香肉丝')。
+知道点号前面的 node 会被系统自动填进 self 即可，不用纠结底层是怎么映射过去的。
+多层继承链的调用逻辑：
+知道“孙子类继承父类，父类继承官方 Node”，孙子就能直接白嫖最顶层 Node 提供的所有现成工具（如 self.get_logger()）。
+if __name__ == '__main__':
+ROS2 运行是通过 setup.py 里的 entry_points 直接强制调 main()，这两行删了毫无影响。
+工业级 ROS2 Python 节点通用模板（以后做项目闭着眼套用）
+import rclpy
+from rclpy.node import Node
+# 1. 声明类并继承官方 Node（必须写 Node，让官方当底座）
+class MyRobotNode(Node):
+    def __init__(self, node_name: str):
+        # 2. 必须第一步调用 super()，激活官方底层的节点通信能力
+        super().__init__(node_name)
+        # 3. 往实体兜里存数据（属性）
+        self.count = 0
+        self.get_logger().info(f'节点 {node_name} 初始化完成！')
+    # 4. 赋予实体专属动作（方法）
+    def do_work(self):
+        self.count += 1
+        self.get_logger().info(f'正在执行任务，第 {self.count} 次')
+def main():
+    # 5. 标准四步生命周期：通电 -> 实例化 -> 挂机待命 -> 关机
+    rclpy.init()  # 必须带括号！
+    node = MyRobotNode('my_node')
+    node.do_work()  # 调用方法必须带括号！
+    rclpy.spin(node)
+    rclpy.shutdown()
+面向对象的所有折腾，本质上就是把之前散落在外的零碎变量和函数，打包存进一个名为 class 的收纳盒里。习惯了这个模板之后，后面学通信无非就是在收纳盒里多塞一个发布者或定时器而已。
+

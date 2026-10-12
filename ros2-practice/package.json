@@ -1,0 +1,17 @@
+{
+  "name": "ros2-practice",
+  "version": "2.0.0",
+  "description": "ROS 2 课堂笔记记忆与默写练习站",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "ros2",
+    "practice",
+    "robotics"
+  ],
+  "author": "",
+  "license": "Apache-2.0"
+}
