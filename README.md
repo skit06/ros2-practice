@@ -18,7 +18,7 @@
 ## 🚀 在线访问与使用
 
 - **在线练习地址**（GitHub Pages）：
-  `https://<你的GitHub用户名>.github.io/<仓库名称>/`
+  👉 **[https://skit06.github.io/ros2-practice/](https://skit06.github.io/ros2-practice/)**
 
 - **手机端最佳体验技巧**：
   在手机自带浏览器（如 iOS Safari 或 Android 浏览器）中打开网址后，点击 **“添加到主屏幕”**，即可生成独立全屏 App 图标，随时随地离线刷题！
