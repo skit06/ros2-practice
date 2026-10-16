@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -1717,7 +1717,7 @@ body {
           <div class="header-progress-info">
             <span class="progress-title">总体练习进度</span>
             <span id="progress-percentage" class="progress-percentage">0% 掌握率</span>
-            <strong id="progress-count" class="progress-ratio">0 / 48</strong>
+            <strong id="progress-count" class="progress-ratio">0 / 62</strong>
           </div>
           <div class="progress-bar-bg">
             <div id="progress-bar-fill" class="progress-bar-fill"></div>
@@ -1814,7 +1814,7 @@ body {
                 <span id="card-source" class="tag-source">出处: Python功能包五步流程笔记.docx</span>
               </div>
               <div class="header-nav">
-                <span id="card-position" class="tag-position">01 / 48</span>
+                <span id="card-position" class="tag-position">01 / 62</span>
               </div>
             </div>
 
@@ -1960,7 +1960,7 @@ body {
             <!-- 顺序流转导航 -->
             <div class="sequence-nav-bar">
               <button id="prev-card-btn" class="nav-btn" type="button">← 上一题 (Alt+←)</button>
-              <span id="sequence-text" class="sequence-status">顺序进度 01 / 48</span>
+              <span id="sequence-text" class="sequence-status">顺序进度 01 / 62</span>
               <button id="next-card-btn" class="nav-btn primary" type="button">下一题 (Alt+→) →</button>
             </div>
           </article>
@@ -1982,13 +1982,15 @@ body {
  */
 
 const modules = [
-  { id: 'all', name: '全部练习', icon: '✦', desc: '按循序渐进的学习路径全面练习 (共 48 题)' },
+  { id: 'all', name: '全部练习', icon: '✦', desc: '按循序渐进的学习路径全面练习 (共 62 题)' },
   { id: 'workspace', name: '工作空间与构建', icon: '▦', desc: '功能包创建、colcon 构建、setup.py 与 CMakeLists 配置' },
   { id: 'python', name: 'Python 节点与面向对象', icon: '🐍', desc: 'rclpy 生命周期、Node 继承、super、self 与环境变量机制' },
   { id: 'cpp', name: 'C++ 节点基础与机制', icon: '⚡', desc: 'rclcpp 四步骨架、智能指针、核心符号与 CMake 定位' },
   { id: 'topics', name: '话题通信 Pub/Sub', icon: '📡', desc: '发布者定时推送、订阅者中断回调、QoS 与外壳模板' },
   { id: 'cli', name: 'CLI 工具与反查三板斧', icon: '⌘', desc: '终端反查三板斧、话题排查命令与 rqt_graph' },
   { id: 'custom-msg', name: '自定义接口 .msg', icon: '📦', desc: '接口包 CMake 铁律、msg 规范、rosidl 宏与生态第一原则' },
+  { id: 'service', name: '服务通信 Client/Server', icon: '🔄', desc: '自定义 .srv、服务端 return 铁律、客户端异步五步走与 CvBridge' },
+  { id: 'params-launch', name: '参数系统与 Launch 启动', icon: '🚀', desc: '参数声明与 .value 铁律、param 排查、Launch 结构与 Node 三要素' },
   { id: 'control', name: '海龟控制与运动学', icon: '🐢', desc: 'Twist 速度通道、看门狗定时器、atan2 航向角与 P 控制原理' },
   { id: 'qt-gui', name: '上位机与 Qt 界面', icon: '🖥️', desc: 'Qt 生命周期、多线程解死循环、回调形参铁律与 setText' }
 ];
@@ -2488,6 +2490,150 @@ const cards = [
     answer: "1. 为什么首选 Python Qt：上位机监控通常只接收 1Hz~10Hz 的轻量级状态广播，Python PyQt 性能完全过剩，且具备免编译、修改脚本即时生效的极高开发与调试效率；\n2. 什么时候必须用 C++ Qt：只有在承载海量高频三维点云渲染（如 RViz2 插件）、或对微秒级实时响应有极端要求的工业级底层控制下，才需要深入 C++ Qt。",
     source: 'ROS2上位机Qt笔记.docx',
     note: '“用对工具比用重工具更重要”：状态看板开发优先追求快速迭代，计算密集型与三维渲染才考虑 C++。'
+  },
+
+  // ================= 7. 服务通信 Client/Server (Service & Face Detection) =================
+  {
+    id: 'srv-definition-syntax',
+    module: 'service',
+    title: '自定义服务接口 .srv 的存放路径与三横线分割法则',
+    question: '在 ROS 2 中定义自定义服务接口（如 FaceDetector.srv），文件应放在功能包的什么目录下？接口文件内部必须遵守怎样的分割法则？',
+    hint: '注意区分 .msg 与 .srv 不同的文件夹名称，以及用于区分 Request 与 Response 的特殊分割符。',
+    answer: "1. 存放路径：必须保存在功能包根目录下的 srv/ 文件夹中（如 srv/FaceDetector.srv）；\n2. 分割法则：文件内部必须且只能使用严格的三个连续短横线 --- 作为中界线，上半部分为 Request（请求字段），下半部分为 Response（响应字段）。",
+    source: 'ROS2服务通信人脸检测笔记.docx',
+    note: '接口功能包必须使用 ament_cmake 构建类型；CMakeLists.txt 中使用 rosidl_generate_interfaces 宏，若字段引用了其他包类型（如 sensor_msgs/Image），必须显式声明 DEPENDENCIES sensor_msgs。'
+  },
+  {
+    id: 'srv-resource-path-share',
+    module: 'service',
+    title: 'ROS 2 静态资源定位铁律（严禁写死绝对路径）',
+    question: '在 Python 节点中，为什么严禁把图片等资源的路径写死（如 /home/user/...）？写出获取功能包安装路径的标准库导入与动态调用语句。',
+    hint: '使用 ament_index_python.packages 提供的专用函数。',
+    answer: "from ament_index_python.packages import get_package_share_directory\npkg_path = get_package_share_directory('功能包名')",
+    source: 'ROS2服务通信人脸检测笔记.docx',
+    note: '铁律：绝对禁止硬编码绝对路径，换机器或 Docker 容器必崩。同时 setup.py 必须在 data_files 中配置资源安装规则，因为 ROS 2 运行程序只认 install/ 目录。'
+  },
+  {
+    id: 'srv-cv-bridge-convert',
+    module: 'service',
+    title: '图像格式转换桥梁：CvBridge 互转核心语句',
+    question: 'OpenCV 矩阵和 ROS 2 传输格式不兼容。写出利用 self.bridge 实现收图转换（ROS 图像转 OpenCV）与发图转换（OpenCV 转 ROS 图像）的两行核心语句。',
+    hint: '收图使用 imgmsg_to_cv2，发图使用 cv2_to_imgmsg。',
+    answer: "# 1. ROS 图像消息 -> OpenCV 图像（收图用）：\ncv_image = self.bridge.imgmsg_to_cv2(request.image)\n\n# 2. OpenCV 图像 -> ROS 图像消息（发图用）：\nrequest.image = self.bridge.cv2_to_imgmsg(image)",
+    source: 'ROS2服务通信人脸检测笔记.docx',
+    note: 'OpenCV 格式为 numpy ndarray，ROS 2 图像传输类型为 sensor_msgs/msg/Image。在服务端处理和客户端发送视觉数据时，CvBridge 是必经桥梁。'
+  },
+  {
+    id: 'srv-server-template-return',
+    module: 'service',
+    title: '服务端（Service Server）创建语句与回调函数两大铁律',
+    question: '写出 Python 节点创建名为 face_detect 的服务语句（接口为 FaceDetector，回调为 detect_callback），并写出回调函数的参数签名与返回值铁律。',
+    hint: 'create_service 需指定三个参数，回调必须接收两个形参且末尾必须 return。',
+    answer: "# 1. 创建服务：\nself.srv = self.create_service(FaceDetector, 'face_detect', self.detect_callback)\n\n# 2. 回调函数签名与返回值铁律：\ndef detect_callback(self, request, response):\n    # 处理业务逻辑 ...\n    return response  # 铁律：必须 return response，否则客户端将永远死等",
+    source: 'ROS2服务通信人脸检测笔记.docx',
+    note: '服务回调函数必须接收两个对象：request（入参）和 response（回包）。.srv 中定义的数组在 Python 中直接用 append() 填充；末尾漏写 return response 客户端将永远挂起。'
+  },
+  {
+    id: 'srv-client-five-steps',
+    module: 'service',
+    title: '客户端（Service Client）调用的“五步走”完整流程',
+    question: '写出 ROS 2 客户端向服务端发起请求的五步标准流程代码：建客、探活、构包、异步调用、回调解析。',
+    hint: '重点写出 wait_for_service 与 call_async 及 add_done_callback。',
+    answer: "# 1. 创建客户端\nself.client = self.create_client(FaceDetector, 'face_detect')\n# 2. 探活等待服务端上线\nwhile not self.client.wait_for_service(timeout_sec=1.0):\n    pass\n# 3. 实例化请求对象并填入数据\nrequest = FaceDetector.Request()\n# 4. 异步调用并注册完成回调\nself.future = self.client.call_async(request)\nself.future.add_done_callback(self.response_callback)\n# 5. 回调函数解析结果\ndef response_callback(self, future):\n    response = future.result()",
+    source: 'ROS2服务通信人脸检测笔记.docx',
+    note: '为什么必须使用 call_async 异步调用：在默认单线程执行器中，如果使用同步 call() 会阻塞当前节点线程，导致接收响应的回调无法被分发，引发死锁。'
+  },
+  {
+    id: 'srv-cli-service-call',
+    module: 'service',
+    title: '终端手动调用服务进行联调的 CLI 命令',
+    question: '在终端中，写出调用服务名为 /face_detect，接口类型为 chapt4_interfaces/srv/FaceDetector 的测试调用命令。',
+    hint: 'ros2 service call ... 参数以 YAML 字符串传递。',
+    answer: 'ros2 service call /face_detect chapt4_interfaces/srv/FaceDetector "{}"',
+    source: 'ROS2服务通信人脸检测笔记.docx',
+    note: '排错利器：在客户端节点尚未写完时，直接通过终端命令行充当临时客户端，快速验证服务端逻辑是否正确。若参数结构复杂，输入服务类型后按两下 TAB 可自动补全 YAML 结构。'
+  },
+
+  // ================= 8. 参数系统与 Launch 启动 (Parameter & Launch) =================
+  {
+    id: 'param-declare-and-get',
+    module: 'params-launch',
+    title: 'Python 节点内操作参数的“声明与获取”两步铁律',
+    question: '在 Python 节点的 __init__ 中，如何声明一个名为 model 且默认值为 hog 的参数？又该如何读取其值？为什么读取时 .value 绝对不能漏？',
+    hint: 'declare_parameter 与 get_parameter，注意封装对象与原生值的区别。',
+    answer: "# 1. 声明参数并赋默认值（未声明严禁直接读取）：\nself.declare_parameter('model', 'hog')\n\n# 2. 读取参数原生数据：\nself.model = self.get_parameter('model').value",
+    source: 'ROS2参数与Launch笔记.docx',
+    note: '两步铁律：未声明直接 get 会抛出 ParameterNotDeclaredException；get_parameter() 返回的是 Parameter 封装对象，加 .value 才能拿到底层的原生字符串/数值。'
+  },
+  {
+    id: 'param-cli-three-axes',
+    module: 'params-launch',
+    title: '终端查看、获取与在线修改参数三板斧命令',
+    question: '写出终端排查参数的三板斧命令：查询指定节点的所有参数列表、查询指定参数的当前值、在线动态修改参数值。',
+    hint: 'ros2 param list, get, set',
+    answer: "# 1. 查列表：\nros2 param list <节点名>\n\n# 2. 查当前值：\nros2 param get <节点名> <参数名>\n\n# 3. 在线改值：\nros2 param set <节点名> <参数名> <新值>",
+    source: 'ROS2参数与Launch笔记.docx',
+    note: '参数本质是节点的动态全局变量，目的是消灭硬编码。在线改值立即生效，无需重启节点；若需要在改值时执行内部逻辑，需注册 add_on_set_parameters_callback。'
+  },
+  {
+    id: 'param-cli-inject-run',
+    module: 'params-launch',
+    title: 'ros2 run 命令行启动节点时直接注入参数的固定写法',
+    question: '使用 ros2 run 启动节点时，如何在命令行尾部直接为节点注入参数？写出固定语法模板。',
+    hint: '注意 --ros-args 与 -p 参数的前缀格式。',
+    answer: 'ros2 run 功能包名 节点名 --ros-args -p 参数名:=参数值',
+    source: 'ROS2参数与Launch笔记.docx',
+    note: '例如：ros2 run demo_pkg node_demo --ros-args -p model:=cnn。--ros-args 是 ROS 2 的系统保留参数分界符，-p 代表 parameter，多个参数连续写多个 -p。'
+  },
+  {
+    id: 'launch-entry-function',
+    module: 'params-launch',
+    title: 'Python Launch 启动文件的标准入口函数与返回类型',
+    question: '写出 Python Launch 启动文件的死语法入口函数名，以及它必须返回的对象类型。',
+    hint: 'generate_launch_description 与 launch.LaunchDescription',
+    answer: "def generate_launch_description():\n    return launch.LaunchDescription([\n        # 放置所有需要启动的动作 (Action)\n    ])",
+    source: 'ROS2参数与Launch笔记.docx',
+    note: '死语法：函数名错一个字母系统都找不到入口。ros2 launch 底层扫描此函数并执行以构建节点启动描述树。'
+  },
+  {
+    id: 'launch-node-action-three-elements',
+    module: 'params-launch',
+    title: 'Launch 文件中 Node 动作的三大必备要素与屏幕日志铁律',
+    question: '在 Launch 文件中配置一个 Node(...) 动作，必须指定哪三大要素？为什么 output=\'screen\' 必不可少？',
+    hint: 'package, executable, output',
+    answer: "launch_ros.actions.Node(\n    package='功能包名',\n    executable='可执行程序名',\n    output='screen',  # 必须配置，否则终端看不到节点的日志输出\n)",
+    source: 'ROS2参数与Launch笔记.docx',
+    note: '避坑铁律：不配 output=\'screen\' 时，节点输出会被静默重定向到隐藏日志文件，终端看起来像死机一样没有任何反馈。executable 为 setup.py 中 entry_points 注册的别名。'
+  },
+  {
+    id: 'launch-parameters-nested-syntax',
+    module: 'params-launch',
+    title: 'Launch 文件中为节点传递参数的严格嵌套格式铁律',
+    question: '在 Launch 文件的 Node(...) 动作中为节点注入 parameters 参数，其数据结构格式有何严格铁律？写出一行配置示例。',
+    hint: '外层列表套内层字典。',
+    answer: "parameters=[{'内部参数名': 外部值}],  # 铁律：必须是外层列表套内层字典",
+    source: 'ROS2参数与Launch笔记.docx',
+    note: '绝对铁律：很多初学者误写为纯字典 parameters={\'model\': \'cnn\'}，启动时会报错崩溃。必须是外层列表，内层每一个元素是一个字典或 YAML 配置文件路径。'
+  },
+  {
+    id: 'launch-setup-py-install-data-files',
+    module: 'params-launch',
+    title: '在 Python 功能包 setup.py 中安装 launch 目录的配置规则',
+    question: '为什么写好的 launch 文件直接用 ros2 launch 运行会报找不到文件？在 setup.py 的 data_files 中必须如何配置？',
+    hint: 'share/包名/launch 与 glob.glob',
+    answer: "import glob\n\n# 在 setup.py 的 data_files 中添加：\n(\n    'share/' + package_name + '/launch',\n    glob.glob('launch/*.launch.py'),\n),",
+    source: 'ROS2参数与Launch笔记.docx',
+    note: '根本原因：ROS 2 运行指令只读取 install/ 目录。未在 setup.py 中配置 data_files，colcon build 就不会把 launch 文件拷贝到 install/share/包名/launch 下。'
+  },
+  {
+    id: 'launch-conditional-if-trap',
+    module: 'params-launch',
+    title: '为什么严禁在 Launch 描述中直接写原生 Python if 判断？应使用什么机制？',
+    question: '为什么严禁在 Launch 文件中直接使用原生 Python if 判断节点是否启动？正确的条件控制机制是什么？',
+    hint: '对比 Launch 构建阶段与节点运行阶段的分离，以及 IfCondition。',
+    answer: "1. 为什么严禁原生 if：generate_launch_description() 执行时仅在构建节点描述树，此时命令行参数尚未求值，原生 Python if 无法获取运行时的真实参数；\n2. 正确机制：必须使用声明式条件对象，通过 condition=IfCondition(launch_config) 将开关挂载给具体的 Node 动作。",
+    source: 'ROS2参数与Launch笔记.docx',
+    note: '认知避坑：Launch 文件不是常规顺序执行脚本，而是“图构建声明”。任何分支控制（如是否打开 RViz、是否连接真机）都必须通过 IfCondition / UnlessCondition 条件动作挂载。'
   }
 ];
 

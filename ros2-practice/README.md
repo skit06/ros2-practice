@@ -1,13 +1,13 @@
-# ROS 2 核心记忆与默写练习站 (全量 48 题完整版)
+# ROS 2 核心记忆与默写练习站 (全量 62 题完整版)
 
-基于工作区内 10 份 ROS 2 课堂与实操 Word（`.docx`）笔记完整整理的本地默写练习 Web 应用。
+基于工作区内 12 份 ROS 2 核心与实操 Word（`.docx`）笔记完整提炼打造的本地与在线默写练习站。
 
 ---
 
 ## 🌟 核心特色
 
-1. **全面覆盖 10 份笔记全部知识点**：
-   - 包含 **48 道深度练习卡片**，无遗漏覆盖工作区所有 10 份文档（工作空间构建、Python 节点、面向对象、C++ 节点机制、话题通信 Pub/Sub、CLI 反查三板斧、自定义接口 .msg、海龟控制与运动学、**全新：ROS 2 上位机 Qt 界面开发**）。
+1. **全面覆盖 12 份笔记全部知识点**：
+   - 包含 **62 道深度练习卡片**，无遗漏覆盖工作区所有 12 份文档（工作空间构建、Python 节点、面向对象、C++ 节点机制、话题通信 Pub/Sub、CLI 反查三板斧、自定义接口 .msg、服务通信 Client/Server、参数系统与 Launch 启动、海龟控制与运动学、ROS 2 上位机 Qt 界面开发）。
 2. **沉浸式默写与防偷看设计**：
    - 题目默认隐藏答案与比对面板，必须自主输入后才能对比；
    - 设有【💡 查看提示】折叠开关，默认不透露具体代码；
@@ -57,7 +57,7 @@ npm start
 
 ---
 
-## 📚 练习模块与 48 题分类一览
+## 📚 练习模块与 62 题分类一览
 
 - **▦ 工作空间与构建 (9 题)**：`ros2 pkg create`（Python 与 C++ 区分）、自定义接口包 `ament_cmake` 铁律、`colcon build` 根目录执行原则、`--symlink-install` 软链调试、`source` 激活与排错第一反射、`setup.py` 与 `CMakeLists.txt` 配置。
 - **🐍 Python 节点与面向对象 (7 题)**：`rclpy.init` 四步生命周期、`Node` 继承、`super().__init__` 首行铁律、`self.` 成员使用红线、`spin()` 与 `KeyboardInterrupt` 机制、`$AMENT_PREFIX_PATH` 寻路机制、通用面向对象模板。
@@ -65,5 +65,7 @@ npm start
 - **📡 话题通信 Pub/Sub (7 题)**：String 发布者与定时器（函数指针不带括号）、发布者定时装信推信回调、订阅者 4 参数规则与事件驱动中断、订阅者回调拆信、QoS 队列深度 10 的物理意义、固定外壳模板与终端 4 步走流程。
 - **⌘ CLI 工具与反查三板斧 (4 题)**：终端反查三板斧（`node info` 掀底牌、`topic info` 查类型、`interface show` 查字段）、话题排查 4 大命令（`list`、`echo`、`info`、`rqt_graph`）、`ros2 run` 通用命令、`RCUTILS_CONSOLE_OUTPUT_FORMAT` 格式化。
 - **📦 自定义接口 .msg (6 题)**：`.msg` 存放路径与大驼峰命名红线、CMake `rosidl_generate_interfaces` 核心宏、Python 导入与 `to_msg()` 时间戳、日志打印与 DDS 发布的本质分工、生态第一原则（Twist 与 LaserScan）、通信为什么用 .msg 而不用 JSON/字典。
+- **🔄 服务通信 Client/Server (6 题 · 新增)**：`.srv` 文件路径与 `---` 分割线语法、`get_package_share_directory` 动态资源定位、`cv_bridge` 图像收发互转、服务端回调 `(self, request, response)` 与 `return response` 铁律、客户端异步五步走（`wait_for_service` 探活与 `call_async` 回调绑定）、终端 `ros2 service call` 联调。
+- **🚀 参数系统与 Launch 启动 (8 题 · 新增)**：`declare_parameter` 声明与 `get_parameter().value` 获取、`ros2 param list/get/set` 终端排查三板斧、`--ros-args -p` 命令行注入参数、`generate_launch_description()` 入口函数与 `LaunchDescription`、`Node` 启动三要素（`package`、`executable`、`output='screen'`）、`parameters=[{...}]` 外层列表套内层字典铁律、`setup.py` `data_files` glob 安装规则、Launch 条件执行避坑与 `IfCondition` 原理。
 - **🐢 海龟控制与运动学 (5 题)**：`Twist` 消息前后线速度与角速度通道、底盘看门狗与 10Hz 定时器持续喂指令机制、画圆回调发布、朝向角 `math.atan2` 避坑铁律、P 比例控制物理直觉与小海龟为何只需 P 控制。
-- **🖥️ 上位机与 Qt 界面 (6 题 · 新增)**：Qt 窗口生命周期四步骨架（`QApplication` -> `QLabel` -> `show` -> `exec_`）、Qt 与 ROS 2 多线程解死循环固定模板（`threading.Thread` + `daemon=True`）、回调形参铁律（定时器 `self` vs 订阅回调 `self, msg`）、UI 文字刷新唯一直接指令 `setText()`、Qt 顶级独立窗口判定规则、上位机技术选型认知（为什么首选 Python Qt 而非 C++ Qt）。
+- **🖥️ 上位机与 Qt 界面 (6 题)**：Qt 窗口生命周期四步骨架（`QApplication` -> `QLabel` -> `show` -> `exec_`）、Qt 与 ROS 2 多线程解死循环固定模板（`threading.Thread` + `daemon=True`）、回调形参铁律（定时器 `self` vs 订阅回调 `self, msg`）、UI 文字刷新唯一直接指令 `setText()`、Qt 顶级独立窗口判定规则、上位机技术选型认知。
